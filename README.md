@@ -11,6 +11,6 @@ A "Papers, Please"-style inspection game built entirely from scratch in Unreal E
 ## Tech Stack
 *   **Engine:** Unreal Engine 5
 *   **Language:** C++
-*   **IDE:** Visual Studio / Cursor / VS Code
+*   **IDE:** Visual Studio / VS Code
 
 *(Gameplay screenshots and further architectural details coming soon)*
