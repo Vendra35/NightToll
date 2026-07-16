@@ -9,6 +9,7 @@
 class ATollVehicle;
 class USplineComponent;
 class ATollDocument;
+class ATollBarrier;
 
 USTRUCT(BlueprintType)
 struct FDriverData
@@ -78,4 +79,7 @@ public:
 	// This will be the class of the vehicle that we will spawn and move along the spline. We can set this in the editor to use different types of vehicles.
 	UPROPERTY(EditDefaultsOnly, Category = "Toll Setup")
 	TSubclassOf<ATollVehicle> VehicleClassToSpawn;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Toll Setup")
+	ATollBarrier* ControlledBarrier;
 };

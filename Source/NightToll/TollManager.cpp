@@ -3,6 +3,7 @@
 
 #include "TollManager.h"
 
+#include "TollBarrier.h"
 #include "TollDocument.h"
 #include "TollVehicle.h"
 #include "Components/SplineComponent.h"
@@ -41,6 +42,10 @@ void ATollManager::Tick(float DeltaTime)
 void ATollManager::ProcessDocumentDecision(bool bIsApproved)
 {
 		UE_LOG(LogTemp, Display, TEXT("Document decision processed: %s"), bIsApproved ? TEXT("Approved") : TEXT("Rejected"));
+		if (bIsApproved && ControlledBarrier)
+		{
+			ControlledBarrier->OpenBarrier();
+		}
 }
 
 void ATollManager::SpawnDocumentForCurrentDriver()
