@@ -11,7 +11,7 @@ A "Papers, Please"-style inspection game built entirely from scratch in Unreal E
 ## Tech Stack
 *   **Engine:** Unreal Engine 5
 *   **Language:** C++
-*   **IDE:** Visual Studio 2022
+*   **IDE:** Visual Studio 2022 / 2026
 
 ## Current Status
 The core gameplay loop is fully functional:
