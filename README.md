@@ -11,6 +11,16 @@ A "Papers, Please"-style inspection game built entirely from scratch in Unreal E
 ## Tech Stack
 *   **Engine:** Unreal Engine 5
 *   **Language:** C++
-*   **IDE:** Visual Studio / VS Code
+*   **IDE:** Visual Studio 2022
 
-*(Gameplay screenshots and further architectural details coming soon)*
+## Current Status
+The core gameplay loop is fully functional:
+- `TollManager` spawns a vehicle and assigns it a spline path.
+- The vehicle travels the spline and reports arrival exactly once (guarded
+  against duplicate reports via a boolean flag).
+- On arrival, the manager spawns a document containing the driver's data.
+- The player can pick up, inspect, and approve or reject the document
+  through a custom UMG interface — or return it to its exact original
+  desk position if they change their mind.
+
+*(Barrier system and next-vehicle queueing in progress.)*
