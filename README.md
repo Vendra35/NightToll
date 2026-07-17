@@ -23,4 +23,4 @@ The core gameplay loop is fully functional:
   through a custom UMG interface — or return it to its exact original
   desk position if they change their mind.
 
-*(Barrier system and next-vehicle queueing in progress.)*
+*(For more information about updates and the current status please see the commits section.)*
