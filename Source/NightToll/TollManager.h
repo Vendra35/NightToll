@@ -52,8 +52,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// This array will hold the data for each driver that will be processed by the toll manager. We can set this up in the editor to define the drivers for the day.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FDriverData> DailyDrivers;
+
+	// This index will keep track of which driver we are currently processing in the DailyDrivers array.
+	int32 CurrentDriverIndex = 0;
 
 	// Document is approved or rejected, this function will be called to process the decision
 	void ProcessDocumentDecision(bool bIsApproved);
@@ -80,6 +84,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Toll Setup")
 	TSubclassOf<ATollVehicle> VehicleClassToSpawn;
 
+	// This will be the barrier that we will control to open or close based on the document decision. We can set this in the editor to link to the specific barrier actor in the scene.
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Toll Setup")
 	ATollBarrier* ControlledBarrier;
+
+	// This will be the current vehicle that is moving along the spline. We can use this to check if a vehicle is currently in the toll area and to manage its behavior.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Toll Setup")
+	ATollVehicle* CurrentVehicle;
+
+	// This will be the spline that the vehicle will follow to exit the toll area. We can set this in the editor to define the exit path.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Toll Setup")
+	USplineComponent* ExitPath;
+
+	// This function will be called when the vehicle has exited the toll area, either after approval or rejection of the document. We can use this to reset the state and prepare for the next vehicle.
+	void OnVehicleExited();
 };

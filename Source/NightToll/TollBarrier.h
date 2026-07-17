@@ -35,8 +35,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Barrier")
 	USceneComponent* RootComp;
 
+	// This variable will be used to determine if the barrier is currently open or closed.
 	bool bIsBarrierOpen = false;
 
+	// This function will be called to open the barrier.
 	void OpenBarrier();
 
 };

@@ -22,6 +22,9 @@ ATollManager::ATollManager()
 	VehiclePath = CreateDefaultSubobject<USplineComponent>(TEXT("VehiclePath"));
 	VehiclePath->SetupAttachment(RootComponent);
 
+	ExitPath = CreateDefaultSubobject<USplineComponent>(TEXT("ExitPath"));
+	ExitPath->SetupAttachment(RootComponent);
+
 }
 
 // Called when the game starts or when spawned
@@ -42,20 +45,28 @@ void ATollManager::Tick(float DeltaTime)
 void ATollManager::ProcessDocumentDecision(bool bIsApproved)
 {
 		UE_LOG(LogTemp, Display, TEXT("Document decision processed: %s"), bIsApproved ? TEXT("Approved") : TEXT("Rejected"));
-		if (bIsApproved && ControlledBarrier)
+
+		if (bIsApproved && ControlledBarrier && CurrentVehicle)
 		{
 			ControlledBarrier->OpenBarrier();
+			CurrentVehicle->Depart(bIsApproved, ExitPath);
+		}
+		else if (!bIsApproved && CurrentVehicle)
+		{
+			CurrentVehicle->Depart(bIsApproved, nullptr);
 		}
 }
 
 void ATollManager::SpawnDocumentForCurrentDriver()
 {
-	if (DocumentClassToSpawn && DailyDrivers.Num() > 0)
+	if (DocumentClassToSpawn && DailyDrivers.IsValidIndex(CurrentDriverIndex)) // Check if the index is valid before accessing the array
 	{
+		// Spawn the document actor at the specified transform
 		ATollDocument* SpawnedDocument = GetWorld()->SpawnActor<ATollDocument>(DocumentClassToSpawn, DocumentSpawnTransform);
 		if (SpawnedDocument)
 		{
-			SpawnedDocument->SetupDocumentData(DailyDrivers[0]);
+			// Set up the document data for the current driver
+			SpawnedDocument->SetupDocumentData(DailyDrivers[CurrentDriverIndex]);
 		}
 	}
 }
@@ -69,11 +80,26 @@ void ATollManager::SpawnVehicle()
 {
 	if (VehicleClassToSpawn)
 	{
-		ATollVehicle* SpawnedVehicle = GetWorld()->SpawnActor<ATollVehicle>(VehicleClassToSpawn);
-		if (SpawnedVehicle)
+		CurrentVehicle = GetWorld()->SpawnActor<ATollVehicle>(VehicleClassToSpawn);
+		if (CurrentVehicle)
 		{
-			SpawnedVehicle->SetupVehicle(VehiclePath, this);
+			// Set the vehicle's initial position to the start of the spline
+			CurrentVehicle->SetupVehicle(VehiclePath, this);
 		}
+	}
+}
+
+void ATollManager::OnVehicleExited()
+{
+	CurrentDriverIndex++; // Move to the next driver in the DailyDrivers array
+
+	if (CurrentDriverIndex < DailyDrivers.Num()) // Check if there are more drivers to process
+	{
+		SpawnVehicle();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Display, TEXT("All drivers have been processed for the day."));
 	}
 }
 

@@ -37,13 +37,29 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	float DistanceAlongSpline;
 
+	// This variable will hold a reference to the spline component that the vehicle should follow.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	USplineComponent* PathToFollow;
 
+	// This variable will hold a reference to the toll manager that owns this vehicle.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	ATollManager* OwningManager;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	USceneComponent* RootComp;
+
+	// This function will be called to set up the vehicle with the path it should follow and the manager that owns it.
 	void SetupVehicle(USplineComponent* InPath, ATollManager* InManager);
 
+	// This variable will be used to determine if the vehicle has reached the end of the spline and arrived at its destination.
 	bool bHasArrived = false;
+
+	// This function will be called when the vehicle is ready to depart, either after approval or rejection of the document.
+	void Depart(bool bIsApproved, USplineComponent* NewExitPath = nullptr);
+
+	// This variable will be used to determine if the vehicle is currently departing along the exit path.
+	bool bIsDeparting = false;
+
+	// This variable will be used to determine if the vehicle is approved to exit or not.
+	bool bIsApprovedExit = false;
 };
