@@ -10,6 +10,7 @@ class ATollVehicle;
 class USplineComponent;
 class ATollDocument;
 class ATollBarrier;
+class UTexture2D;
 
 USTRUCT(BlueprintType)
 struct FDriverData
@@ -18,6 +19,9 @@ struct FDriverData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString DriverName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* DriverPhoto;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString DriverLookDescription;

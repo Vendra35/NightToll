@@ -6,7 +6,9 @@
 #include "TollBarrier.h"
 #include "TollDocument.h"
 #include "TollVehicle.h"
+#include "TollPlayerController.h"
 #include "Components/SplineComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATollManager::ATollManager()
@@ -46,13 +48,15 @@ void ATollManager::ProcessDocumentDecision(bool bIsApproved)
 {
 		UE_LOG(LogTemp, Display, TEXT("Document decision processed: %s"), bIsApproved ? TEXT("Approved") : TEXT("Rejected"));
 
-		if (bIsApproved && ControlledBarrier && CurrentVehicle)
+		if (bIsApproved && ControlledBarrier && CurrentVehicle) // Check if the barrier and vehicle are valid before trying to open the barrier and depart
 		{
+			// Open the barrier and allow the vehicle to depart along the exit path
 			ControlledBarrier->OpenBarrier();
 			CurrentVehicle->Depart(bIsApproved, ExitPath);
 		}
 		else if (!bIsApproved && CurrentVehicle)
 		{
+			// If the document is rejected, we can still allow the vehicle to depart, but without opening the barrier. This could represent a scenario where the vehicle is sent back or redirected.
 			CurrentVehicle->Depart(bIsApproved, nullptr);
 		}
 }
@@ -73,14 +77,16 @@ void ATollManager::SpawnDocumentForCurrentDriver()
 
 void ATollManager::OnVehicleArrived()
 {
+	// When the vehicle arrives, we can spawn the document for the current driver
 	SpawnDocumentForCurrentDriver();
 }
 
 void ATollManager::SpawnVehicle()
 {
-	if (VehicleClassToSpawn)
+	if (VehicleClassToSpawn) // Check if the vehicle class is set before trying to spawn
 	{
 		CurrentVehicle = GetWorld()->SpawnActor<ATollVehicle>(VehicleClassToSpawn);
+
 		if (CurrentVehicle)
 		{
 			// Set the vehicle's initial position to the start of the spline
@@ -97,9 +103,18 @@ void ATollManager::OnVehicleExited()
 	{
 		SpawnVehicle();
 	}
-	else
+	else // If all drivers have been processed, we can show the end of shift UI or perform any other end-of-day logic
 	{
-		UE_LOG(LogTemp, Display, TEXT("All drivers have been processed for the day."));
+		ATollPlayerController* TollPlayerController = Cast<ATollPlayerController>(UGameplayStatics::GetPlayerController(this, 0)); // Get the player controller to show the end of shift UI
+		if (TollPlayerController)
+		{
+			TollPlayerController->ShowEndOfShiftUI(); // Call a function in the player controller to show the end of shift UI
+		}
+	}
+
+	if (ControlledBarrier) // Ensure the barrier is closed after the vehicle exits
+	{
+		ControlledBarrier->CloseBarrier();
 	}
 }
 

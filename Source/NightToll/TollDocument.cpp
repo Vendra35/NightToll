@@ -9,7 +9,7 @@
 #include "TollPlayerController.h"
 #include "TollDocumentWidget.h"
 #include "TollManager.h"
-#include "Kismet/GameplayStatics.h" // PlayerController'ý dünyadan çekmek için
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATollDocument::ATollDocument()
@@ -26,7 +26,9 @@ ATollDocument::ATollDocument()
 void ATollDocument::BeginPlay()
 {
 	Super::BeginPlay();
-	OriginalDeskTransform = GetActorTransform(); // Doðduðum yeri aklýma yazdým.
+
+	// Store the original transform of the document on the desk for later use when dropping it back.
+	OriginalDeskTransform = GetActorTransform(); 
 }
 
 // Called every frame
@@ -38,14 +40,20 @@ void ATollDocument::Tick(float DeltaTime)
 
 void ATollDocument::Interact_Implementation(AActor* Interactor)
 {
-	// 1. Oyuncunun beynine (Player Controller) dünyadan doðrudan ulaþ
+	if (DocumentPickupSound)
+	{
+		// Play the sound at the location of the document when it is picked up.
+		UGameplayStatics::PlaySoundAtLocation(this, DocumentPickupSound, GetActorLocation());
+	}
+
+	// 1. Directly access the player's brain (Player Controller) from the world
 	ATollPlayerController* TollPlayerController = Cast<ATollPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 
-	// 2. Güvenlik Zýrhý: Controller var mý ve Arayüz (Widget) RAM'de yaratýlmýþ mý?
+	// 2. Security Armor: Is the Controller present and is the Interface (Widget) created in RAM?
 	if (TollPlayerController && TollPlayerController->DocumentWidgetInstance)
 	{
-		// 3. Kendi içindeki verileri doðrudan UI'ýn fonksiyonuna ateþle
-		TollPlayerController->DocumentWidgetInstance->UpdateDocumentUI(DocumentDetails.DriverName, DocumentDetails.LicensePlate, DocumentDetails.ExpirationYear);
+		// 3. Fire the data inside directly to the UI's function
+		TollPlayerController->DocumentWidgetInstance->UpdateDocumentUI(DocumentDetails.DriverName, DocumentDetails.LicensePlate, DocumentDetails.ExpirationYear, DocumentDetails.DriverPhoto);
 		TollPlayerController->ShowDocumentUI();
 	}
 
@@ -62,15 +70,22 @@ void ATollDocument::Interact_Implementation(AActor* Interactor)
 
 void ATollDocument::StopInteract_Implementation(AActor* Interactor)
 {
+	if (DocumentDropSound)
+	{
+		// Play the sound at the location of the document when it is dropped.
+		UGameplayStatics::PlaySoundAtLocation(this, DocumentDropSound, GetActorLocation());
+	}
+
 	// DocumentMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	// Belgeyi elimize alýrken Interact_Implementation içinde DocumentMesh->AttachToComponent(...) yazmamýþtýk; doðrudan aktörün kendisine AttachToComponent(...) demiþtik. 
-	// Kodun simetrik ve okunaklý olmasý için, alýrken aktörü bütünüyle yapýþtýrdýysak, býrakýrken de bütünüyle sökmemiz gerekir.
+	// When we picked up the document, we didn't write DocumentMesh->AttachToComponent(...) in Interact_Implementation; we directly said AttachToComponent(...) to the actor itself.
+	// For symmetry and readability of the code, if we glued the whole actor when picking it up, we need to detach the whole actor when dropping it.
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	SetActorEnableCollision(true);
 	DocumentMesh->SetSimulatePhysics(false);
-	// Hafýzadaki masanýn o ilk konumuna sýfýr hata ile geri dön.
+	// Reset to the original position of the desk in memory with zero error.
 	SetActorTransform(OriginalDeskTransform);
-	// 1. Oyuncunun beynine (Player Controller) dünyadan doðrudan ulaþ
+
+	// Directly access the player's brain (Player Controller) from the world
 	ATollPlayerController* TollPlayerController = Cast<ATollPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	if (TollPlayerController)
 	{
@@ -82,10 +97,13 @@ void ATollDocument::SetupDocumentData(const FDriverData& InDriverData)
 {
 	DocumentDetails.DriverName = InDriverData.DriverName;
 
+	DocumentDetails.DriverPhoto = InDriverData.DriverPhoto;
+
 	DocumentDetails.LicensePlate = InDriverData.LicensePlate;
 
 	DocumentDetails.ExpirationYear = InDriverData.ExpirationYear;
 
 	DocumentDetails.bIsFake = InDriverData.bHasAnomaly;
+
 }
 

@@ -9,6 +9,8 @@
 #include "TollDocument.generated.h"
 
 class UStaticMeshComponent;
+class UTexture2D;
+class USoundBase;
 
 struct FDriverData;
 
@@ -19,6 +21,9 @@ struct FDocumentData
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString DriverName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* DriverPhoto;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 ExpirationYear;
@@ -47,8 +52,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Implement the Interact function from the InteractableInterface
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
+	// Implement the StopInteract function from the InteractableInterface
 	virtual void StopInteract_Implementation(AActor* Interactor) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Document Data")
@@ -57,8 +64,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Document")
 	UStaticMeshComponent* DocumentMesh;
 
+	// Function to set up the document data based on the provided driver data
 	void SetupDocumentData(const FDriverData& InDriverData);
 
+	// Original transform of the document on the desk, used to reset its position when dropped
 	FTransform OriginalDeskTransform;
+
+	// Sound effect for picking up the document
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+	USoundBase* DocumentPickupSound;
+
+	// Sound effect for dropping the document
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+	USoundBase* DocumentDropSound;
 
 };

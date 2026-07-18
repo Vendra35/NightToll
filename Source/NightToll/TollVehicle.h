@@ -9,6 +9,7 @@
 class ATollManager;
 class USplineComponent;
 class UStaticMeshComponent;
+class UAudioComponent;
 
 UCLASS()
 class NIGHTTOLL_API ATollVehicle : public AActor
@@ -29,6 +30,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	UStaticMeshComponent* VehicleMesh;
+
+	// Audio component for engine sound
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SFX")
+	UAudioComponent* EngineSoundComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vehicle")
 	float VehicleSpeed = 500.0f; // Default speed, can be adjusted in the editor
@@ -62,4 +67,13 @@ public:
 
 	// This variable will be used to determine if the vehicle is approved to exit or not.
 	bool bIsApprovedExit = false;
+
+	// This timer handle will be used to manage the timing of the vehicle's departure after the document decision is processed.
+	FTimerHandle DepartTimerHandle;
+
+	// This function will be called to start the vehicle's movement along the spline after the document decision is processed.
+	void StartDriving();
+
+	// This variable will hold a reference to the exit path that the vehicle should follow when departing.
+	USplineComponent* PendingExitPath;
 };

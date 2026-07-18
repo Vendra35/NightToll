@@ -3,6 +3,8 @@
 
 #include "TollBarrier.h"
 
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 ATollBarrier::ATollBarrier()
 {
@@ -35,18 +37,42 @@ void ATollBarrier::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsBarrierOpen)
-	{
-		FRotator TargetRotation(90.0f, 0.0f, 0.0f);
-		FRotator CurrentRotation = BarrierHinge->GetRelativeRotation();
-		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 5.0f);
-		BarrierHinge->SetRelativeRotation(NewRotation);
-	}
+	FRotator TargetRotation;
 
+	if (bIsBarrierOpen) // If the barrier is open, we want to rotate the barrier arm to a vertical position (90 degrees pitch).
+	{
+		TargetRotation = FRotator(90.0f, 0.0f, 0.0f);
+	}
+	else // If the barrier is closed, we want to rotate the barrier arm back to a horizontal position (0 degrees pitch).
+	{
+		TargetRotation = FRotator(0.0f, 0.0f, 0.0f);
+	}
+	// Smoothly interpolate the rotation of the barrier hinge towards the target rotation
+	FRotator CurrentRotation = BarrierHinge->GetRelativeRotation();
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 2.0f);
+	BarrierHinge->SetRelativeRotation(NewRotation);
 }
 
 void ATollBarrier::OpenBarrier()
 {
+	// Set the barrier state to open
 	bIsBarrierOpen = true;
+	
+	if (BarrierOpenSound)
+	{
+		// Play the barrier opening sound at the barrier's location
+		UGameplayStatics::PlaySoundAtLocation(this, BarrierOpenSound, GetActorLocation());
+	}
 }
 
+void ATollBarrier::CloseBarrier()
+{
+	// Set the barrier state to closed
+	bIsBarrierOpen = false;
+	
+	if (BarrierCloseSound)
+	{
+		// Play the barrier closing sound at the barrier's location
+		UGameplayStatics::PlaySoundAtLocation(this, BarrierCloseSound, GetActorLocation());
+	}
+}

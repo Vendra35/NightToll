@@ -8,13 +8,15 @@
 #include "TollPlayerController.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 #include "Kismet/GameplayStatics.h"
 
-void UTollDocumentWidget::UpdateDocumentUI(FString InDriverName, FString InLicensePlate, int32 InExpirationYear)
+void UTollDocumentWidget::UpdateDocumentUI(FString InDriverName, FString InLicensePlate, int32 InExpirationYear, UTexture2D* InDriverPhoto)
 {
-	if (DriverNameText && LicensePlateText && ExpirationYearText)
+	if (DriverNameText && LicensePlateText && ExpirationYearText && DriverPhotoImage)
 	{
 		DriverNameText->SetText(FText::FromString(InDriverName));
+		DriverPhotoImage->SetBrushFromTexture(InDriverPhoto);
 		LicensePlateText->SetText(FText::FromString(InLicensePlate));
 		ExpirationYearText->SetText(FText::FromString(FString::FromInt(InExpirationYear)));
 	}

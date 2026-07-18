@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "TollBarrier.generated.h"
 
+class USoundBase;
+
 UCLASS()
 class NIGHTTOLL_API ATollBarrier : public AActor
 {
@@ -40,5 +42,16 @@ public:
 
 	// This function will be called to open the barrier.
 	void OpenBarrier();
+
+	// This function will be called to close the barrier.
+	void CloseBarrier();
+
+	// Sound effect for opening the barrier
+	UPROPERTY(EditAnywhere, Category = "SFX")
+	USoundBase* BarrierOpenSound;
+
+	// Sound effect for closing the barrier
+	UPROPERTY(EditAnywhere, Category = "SFX")
+	USoundBase* BarrierCloseSound;
 
 };

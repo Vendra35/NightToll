@@ -8,6 +8,8 @@
 
 class UButton;
 class UTextBlock;
+class UImage;
+class UTexture2D;
 
 /**
  * 
@@ -28,13 +30,16 @@ public:
 	UTextBlock* ExpirationYearText;
 
 	UFUNCTION(BlueprintCallable, Category = "Document UI")
-	void UpdateDocumentUI(FString InDriverName, FString InLicensePlate, int32 InExpirationYear);
+	void UpdateDocumentUI(FString InDriverName, FString InLicensePlate, int32 InExpirationYear, UTexture2D* InDriverPhoto);
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* ApproveButton;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* RejectButton;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* DriverPhotoImage;
 
 protected:
 	virtual void NativeConstruct() override;

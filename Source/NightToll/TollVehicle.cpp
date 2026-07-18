@@ -6,6 +6,8 @@
 #include "TollManager.h"
 #include "Components/SplineComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/AudioComponent.h"
 
 // Sets default values
 ATollVehicle::ATollVehicle()
@@ -13,41 +15,65 @@ ATollVehicle::ATollVehicle()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Create a root scene component for the vehicle and set it as the root component of the actor.
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	RootComponent = RootComp; // RootComp->SetupAttachment(RootComponent); Is wrong because when RootComponent is first time created in the RAM , it is null. So we need to set the RootComponent to RootComp instead of attaching RootComp to RootComponent.
 
+	// Create a static mesh component for the vehicle and attach it to the root component.
 	VehicleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VehicleMesh"));
 	VehicleMesh->SetupAttachment(RootComp);
+
+	// Create an audio component for the engine sound and attach it to the root component.
+	EngineSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("EngineSoundComponent"));
+	EngineSoundComponent->SetupAttachment(RootComp);
 }
 
 // Called when the game starts or when spawned
 void ATollVehicle::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Create a dynamic material instance for the vehicle mesh to allow for runtime modifications.
+	UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(VehicleMesh->GetMaterial(0), this);
+
+	if (DynMaterial) // Check if the dynamic material instance was successfully created.
+	{
+		// Set a random color for the vehicle's body by modifying the "BodyColor" parameter of the dynamic material.
+		DynMaterial->SetVectorParameterValue(FName("BodyColor"), FLinearColor::MakeRandomColor());
+		VehicleMesh->SetMaterial(0, DynMaterial);
+	}
 }
 
 // Called every frame
 void ATollVehicle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (PathToFollow && !bHasArrived && !bIsDeparting)
+	
+	if (PathToFollow && !bHasArrived && !bIsDeparting) // Only move the vehicle if it has a path, hasn't arrived, and isn't departing.
 	{
-		DistanceAlongSpline = DistanceAlongSpline + VehicleSpeed * DeltaTime;
+		DistanceAlongSpline = DistanceAlongSpline + VehicleSpeed * DeltaTime; // Update the distance along the spline based on the vehicle's speed and the time elapsed since the last frame.
 
 		if (DistanceAlongSpline >= PathToFollow->GetSplineLength()) // Check if we've reached the end of the spline.
 		{
 			DistanceAlongSpline = PathToFollow->GetSplineLength(); // Align the distance exactly with the end of the track (so that the vehicle doesn't go off the tracks).
 			bHasArrived = true; // Mark that we've arrived to prevent further movement.
+
+			if (EngineSoundComponent) // Check if the engine sound component exists before trying to modify it.
+			{
+				// Reduce the engine sound pitch and volume to indicate that the vehicle has stopped.
+				EngineSoundComponent->SetPitchMultiplier(0.5f);
+				EngineSoundComponent->SetVolumeMultiplier(0.6f);
+			}
+
 			if (OwningManager)
 			{
-				OwningManager->OnVehicleArrived();
+				OwningManager->OnVehicleArrived(); // Notify the Toll Manager that the vehicle has arrived at its destination.
 			}
 		}
 	}
-	else if (PathToFollow && bIsDeparting && bIsApprovedExit) 
+	else if (PathToFollow && bIsDeparting && bIsApprovedExit) // Only move the vehicle if it has a path, is departing, and is approved to exit.
 	{
-		DistanceAlongSpline = DistanceAlongSpline + VehicleSpeed * DeltaTime;
+		DistanceAlongSpline = DistanceAlongSpline + VehicleSpeed * DeltaTime; // Update the distance along the spline based on the vehicle's speed and the time elapsed since the last frame.
 
 		if (DistanceAlongSpline >= PathToFollow->GetSplineLength()) // Check if we've reached the end of the spline.
 		{
@@ -61,7 +87,7 @@ void ATollVehicle::Tick(float DeltaTime)
 			}
 		}
 	}
-	else if (PathToFollow && bIsDeparting && !bIsApprovedExit)
+	else if (PathToFollow && bIsDeparting && !bIsApprovedExit) // Only move the vehicle if it has a path, is departing, and is NOT approved to exit (i.e., rejected).
 	{
 		DistanceAlongSpline = DistanceAlongSpline - VehicleSpeed * DeltaTime; // Move the vehicle backward along the spline for rejection.
 
@@ -101,13 +127,29 @@ void ATollVehicle::SetupVehicle(USplineComponent* InPath, ATollManager* InManage
 void ATollVehicle::Depart(bool bIsApproved, USplineComponent* NewExitPath)
 {
 	bIsApprovedExit = bIsApproved; // Store the approval status for later use
+
+	PendingExitPath = NewExitPath; // Store the new exit path for later use
+
+	// Start a timer to delay the departure, allowing for any necessary animations or effects before the vehicle starts moving.
+	GetWorld()->GetTimerManager().SetTimer(DepartTimerHandle, this, &ATollVehicle::StartDriving, 2.0f, false);
+}
+
+void ATollVehicle::StartDriving()
+{
 	bIsDeparting = true; // Mark the vehicle as departing
 	bHasArrived = false; // Reset arrival status for departure
 
-	if (bIsApproved)
+	if (bIsApprovedExit) // If the vehicle is approved to exit, set the path to follow to the new exit path.
 	{
-		PathToFollow = NewExitPath; // Set the new exit path for the vehicle to follow
-		DistanceAlongSpline = 0.0f; // Reset distance for the new path
+		DistanceAlongSpline = 0.0f; // Reset distance along the spline for departure
+		PathToFollow = PendingExitPath; // Set the path to follow to the new exit path
+	}
+
+	if (EngineSoundComponent) // Check if the engine sound component exists before trying to modify it.
+	{
+		// Increase the engine sound pitch and volume to indicate that the vehicle is starting to drive.
+		EngineSoundComponent->SetPitchMultiplier(1.2f);
+		EngineSoundComponent->SetVolumeMultiplier(1.0f);
 	}
 }
 
