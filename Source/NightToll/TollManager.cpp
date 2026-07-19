@@ -35,6 +35,14 @@ void ATollManager::BeginPlay()
 	Super::BeginPlay();
 
 	SpawnVehicle();
+
+	// Get the player controller to update the HUD for the initial money amount
+	ATollPlayerController* TollPlayerController = Cast<ATollPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+
+	if (TollPlayerController) // Check if the cast was successful
+	{
+		TollPlayerController->UpdateHUDMoney(CurrentMoney); // Update the HUD with the initial money amount
+	}
 }
 
 // Called every frame
@@ -48,16 +56,83 @@ void ATollManager::ProcessDocumentDecision(bool bIsApproved)
 {
 		UE_LOG(LogTemp, Display, TEXT("Document decision processed: %s"), bIsApproved ? TEXT("Approved") : TEXT("Rejected"));
 
-		if (bIsApproved && ControlledBarrier && CurrentVehicle) // Check if the barrier and vehicle are valid before trying to open the barrier and depart
+		bool bIsAnomaly = DailyDrivers[CurrentDriverIndex].bHasAnomaly;
+		bool bIsInvalid = DailyDrivers[CurrentDriverIndex].bHasInvalidDocument;
+
+		// 1. Game rules and economy (completely independent of the barrier or vehicle)
+		if (bIsApproved)
 		{
-			// Open the barrier and allow the vehicle to depart along the exit path
-			ControlledBarrier->OpenBarrier();
-			CurrentVehicle->Depart(bIsApproved, ExitPath);
+			if (bIsAnomaly)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Anomaly detected for driver: %s"), *DailyDrivers[CurrentDriverIndex].DriverName);
+				// Handle anomaly case here, e.g., log it, notify the player, etc.
+				UE_LOG(LogTemp, Warning, TEXT("GAME OVER"));
+			}
+			else if (bIsInvalid)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Invalid document detected for driver: %s"), *DailyDrivers[CurrentDriverIndex].DriverName);
+				// Handle invalid document case here, e.g., log it, notify the player, etc.
+				CurrentMoney -= 10; // Deduct money for invalid document
+				UGameplayStatics::PlaySound2D(this, MoneyLoseSound);
+			}
+			else
+			{
+				CurrentMoney += 10; // Reward for approving a valid document
+				UGameplayStatics::PlaySound2D(this, MoneyGainSound);
+			}
 		}
-		else if (!bIsApproved && CurrentVehicle)
+		else // (!bIsApproved)
 		{
-			// If the document is rejected, we can still allow the vehicle to depart, but without opening the barrier. This could represent a scenario where the vehicle is sent back or redirected.
-			CurrentVehicle->Depart(bIsApproved, nullptr);
+			if (bIsAnomaly)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Anomaly detected for driver: %s"), *DailyDrivers[CurrentDriverIndex].DriverName);
+				// Handle anomaly case here, e.g., log it, notify the player, etc.
+				CurrentMoney += 20; // Reward for catching an anomaly
+				UGameplayStatics::PlaySound2D(this, MoneyGainSound);
+			}
+			else if (bIsInvalid)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Invalid document detected for driver: %s"), *DailyDrivers[CurrentDriverIndex].DriverName);
+				CurrentMoney += 10; // Reward for catching an invalid document
+				UGameplayStatics::PlaySound2D(this, MoneyGainSound);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Valid document rejected for driver: %s"), *DailyDrivers[CurrentDriverIndex].DriverName);
+				CurrentMoney -= 10; // Deduct money for rejecting a valid document
+				UGameplayStatics::PlaySound2D(this, MoneyLoseSound);
+			}
+		}
+		// Check for game over condition
+		if (CurrentMoney < 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GAME OVER: YOUR ARE POOR!"));
+			// Here you can implement additional game over logic, such as showing a game over screen, stopping the game, etc.
+		}
+
+		// Get the player controller to update the HUD for the current money amount
+		ATollPlayerController* TollPlayerController = Cast<ATollPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+
+		if (TollPlayerController) // Check if the cast was successful
+		{
+			TollPlayerController->UpdateHUDMoney(CurrentMoney); // Update the HUD with the new money amount
+		}
+
+		// 2. Trigger world objects (Just do null-checks for these)
+		if (CurrentVehicle)
+		{
+			if (bIsApproved)
+			{
+				if (ControlledBarrier)
+				{
+					ControlledBarrier->OpenBarrier(); // Open the barrier for approved vehicles
+				}
+				CurrentVehicle->Depart(bIsApproved, ExitPath); // Pass the ExitPath to the vehicle for it to follow after departure
+			}
+			else
+			{
+				CurrentVehicle->Depart(bIsApproved, nullptr); // No exit path for rejected vehicles, they will just reverse back to the start
+			}
 		}
 }
 

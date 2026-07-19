@@ -5,11 +5,13 @@
 
 #include "TollDocumentWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "TollHUDWidget.h"
 
 void ATollPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Create and add the Document Widget to the viewport and hide it initially
 	if (DocumentWidgetClass)
 	{
 		DocumentWidgetInstance = CreateWidget<UTollDocumentWidget>(this, DocumentWidgetClass);
@@ -17,6 +19,15 @@ void ATollPlayerController::BeginPlay()
 		{
 			DocumentWidgetInstance->AddToViewport();
 			HideDocumentUI();
+		}
+	}
+	// Create and add the HUD Widget to the viewport
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UTollHUDWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
 		}
 	}
 }
@@ -57,5 +68,14 @@ void ATollPlayerController::ShowEndOfShiftUI()
 			SetInputMode(InputMode); // Apply the input mode
 			FlushPressedKeys(); // Flush any pressed keys to prevent unintended input after showing the UI
 		}
+	}
+}
+
+void ATollPlayerController::UpdateHUDMoney(int32 NewMoney)
+{
+	// Check if the HUD widget instance is valid before attempting to update the money display
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->UpdateMoney(NewMoney); // Call the UpdateMoney function on the HUD widget instance to update the displayed money amount
 	}
 }

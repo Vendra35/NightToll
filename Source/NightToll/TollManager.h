@@ -35,6 +35,9 @@ struct FDriverData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString LicensePlate;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) 
+	bool bHasInvalidDocument;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHasAnomaly;
 };
@@ -102,4 +105,15 @@ public:
 
 	// This function will be called when the vehicle has exited the toll area, either after approval or rejection of the document. We can use this to reset the state and prepare for the next vehicle.
 	void OnVehicleExited();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy") 
+	int32 CurrentMoney = 10;
+
+	// Sound to play when money is gained
+	UPROPERTY(EditAnywhere, Category = "SFX")
+	USoundBase* MoneyGainSound;
+
+	// Sound to play when money is lost
+	UPROPERTY(EditAnywhere, Category = "SFX")
+	USoundBase* MoneyLoseSound;
 };

@@ -7,6 +7,7 @@
 #include "TollPlayerController.generated.h"
 
 class UTollDocumentWidget;
+class UTollHUDWidget;
 
 /**
  * 
@@ -28,6 +29,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> EndOfShiftWidgetClass;
 
+	// HUD Widget Class
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTollHUDWidget> HUDWidgetClass;
+
 public:
 	
 	// Document Widget Instance
@@ -38,6 +43,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UUserWidget* EndOfShiftWidgetInstance;
 
+	// HUD Widget Instance
+	UPROPERTY(BlueprintReadOnly)
+	UTollHUDWidget* HUDWidgetInstance;
+
 	// Show the Document UI
 	void ShowDocumentUI();
 
@@ -46,5 +55,8 @@ public:
 
 	// Show the End of Shift UI
 	void ShowEndOfShiftUI();
+
+	// Update the HUD with the new money amount
+	void UpdateHUDMoney(int32 NewMoney); 
 	
 };
